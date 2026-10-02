@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+# Local SQLite database (rebuilt with `npm run dev`)
+prisma/*.db
+prisma/*.db-journal
+# Uploaded CSV copies may contain PHI - never commit them
+data/
+*.real.csv
+.DS_Store

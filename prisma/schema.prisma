@@ -1,0 +1,211 @@
+// CareGuide Portal - home care intake / follow-up management
+// SQLite for local development. Enum-like fields are stored as strings;
+// allowed values live in src/lib/constants.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  role       String   // COORDINATOR | SUPERVISOR | ADMIN
+  department String?
+  isDemo     Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  source     String   @default("SEED") // SEED | IMPORT | MANUAL
+  createdAt  DateTime @default(now())
+}
+
+model Department {
+  id                String  @id @default(uuid())
+  name              String  @unique
+  sortOrder         Int     @default(0)
+  isActive          Boolean @default(true)
+  defaultSupervisor String?
+  description       String?
+}
+
+model Case {
+  id                  String    @id @default(uuid())
+  referralId          String    @unique
+  patientName         String?
+  referralSource      String?
+  homePhone           String?
+  phone2              String?
+  medicaidNumber      String?
+  currentStatus       String?
+  department          String?
+  intakePerson        String?
+  assignedCoordinator String?
+  assignedSupervisor  String?
+  receivedDate        DateTime?
+  lastNote            String?
+  lastNoteDate        DateTime?
+  currentStage        String?
+  process             String?
+  // ACTIVE | SUPERVISOR_REVIEW | HOLD | RESOLVED | CLOSED
+  caseState           String    @default("ACTIVE")
+  statusRuleId        String?
+  statusRule          StatusRule? @relation(fields: [statusRuleId], references: [id])
+  // consecutive unsuccessful contact attempts in the current contact sequence
+  noAnswerAttempts    Int       @default(0)
+  lastActionAt        DateTime?
+  // cached NoteInterpreter output for the latest note (JSON)
+  interpretationJson  String?
+  interpretationConfidence String? // HIGH | MEDIUM | LOW
+  dataIssuesJson      String?   // cached data-quality flags (JSON string[])
+  source              String    @default("SEED") // SEED | IMPORT | MANUAL
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  tasks       FollowUpTask[]
+  history     FollowUpHistory[]
+  escalations Escalation[]
+
+  @@index([department])
+  @@index([assignedCoordinator])
+  @@index([caseState])
+  @@index([currentStatus])
+}
+
+model FollowUpTask {
+  id                  String    @id @default(uuid())
+  caseId              String
+  case                Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignedCoordinator String?
+  department          String?
+  // FOLLOW_UP | PHONE_RETRY | NOTE_DATE | MANUAL | SUPERVISOR_REVIEW
+  taskType            String
+  reason              String
+  dueDate             DateTime  // due instant (start of day when hasDueTime = false)
+  hasDueTime          Boolean   @default(false)
+  dueTime             String?   // "HH:mm" when hasDueTime
+  priority            Int       @default(3) // 1 highest
+  // OPEN | COMPLETED | CANCELLED
+  status              String    @default("OPEN")
+  waitingOn           String?   // e.g. "Insurance", "Medicaid decision" -> WAITING until due
+  completedAt         DateTime?
+  completedBy         String?
+  outcome             String?
+  attemptNumber       Int       @default(1)
+  maxAttempts         Int?
+  // RULE | NOTE | MANUAL | RETRY | IMPORT | ESCALATION | SUPERVISOR
+  generatedBy         String
+  escalationRequired  Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  history FollowUpHistory[]
+
+  @@index([status, dueDate])
+  @@index([assignedCoordinator, status])
+  @@index([caseId])
+}
+
+model FollowUpHistory {
+  id               String    @id @default(uuid())
+  caseId           String
+  case             Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  taskId           String?
+  task             FollowUpTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  coordinator      String?
+  actionDate       DateTime  @default(now())
+  // FOLLOW_UP | NOTE | STATUS_CHANGE | ASSIGNMENT | ESCALATION | IMPORT | SUPERVISOR_ACTION | TASK_CREATED
+  actionType       String
+  outcome          String?
+  note             String?
+  nextFollowUpDate DateTime?
+  attemptNumber    Int?
+  previousValue    String?
+  newValue         String?
+
+  @@index([caseId, actionDate])
+  @@index([actionDate])
+}
+
+model StatusRule {
+  id                       String   @id @default(uuid())
+  status                   String?  // referral status this rule applies to (null = department default / outcome rule)
+  department               String?
+  process                  String?
+  stage                    String?
+  outcome                  String?  // outcome-specific rule, e.g. NO_ANSWER
+  followUpIntervalDays     Int?
+  sameDayRetryHours        Float?
+  maximumAttempts          Int?
+  escalateAfterAttempts    Int?
+  isActive                 Boolean  @default(true)
+  isConfigured             Boolean  @default(true)  // false => "Rule not configured", never invent
+  isTerminal               Boolean  @default(false) // closed / admitted: no follow-ups
+  isHold                   Boolean  @default(false) // on hold: no automatic follow-ups
+  requiresSupervisorReview Boolean  @default(false)
+  needsConfirmation        Boolean  @default(false) // placeholder value awaiting manager confirmation
+  instructions             String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  cases Case[]
+
+  @@index([status])
+}
+
+model Escalation {
+  id                    String    @id @default(uuid())
+  caseId                String
+  case                  Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  taskId                String?
+  coordinator           String?
+  department            String?
+  reason                String
+  attempts              Int       @default(0)
+  lastAttemptAt         DateTime?
+  // OPEN | REVIEWED | RETURNED | CLOSED
+  status                String    @default("OPEN")
+  supervisorInstruction String?
+  resolvedBy            String?
+  resolvedAt            DateTime?
+  createdAt             DateTime  @default(now())
+
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  user       String
+  action     String
+  entityType String
+  entityId   String
+  field      String?
+  oldValue   String?
+  newValue   String?
+  details    String?
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
+model ImportBatch {
+  id            String   @id @default(uuid())
+  fileName      String
+  storedPath    String?
+  rowCount      Int
+  newCount      Int      @default(0)
+  updatedCount  Int      @default(0)
+  unchangedCount Int     @default(0)
+  errorCount    Int      @default(0)
+  errorsJson    String?
+  columnsJson   String?
+  importedBy    String
+  createdAt     DateTime @default(now())
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
