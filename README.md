@@ -30,6 +30,24 @@ the migrations and loads **fake** demo data (136 cases, no real patient informat
 The business timezone is `APP_TIMEZONE` in `.env` (default `America/New_York`); "today",
 "due today" and "overdue" are computed with it.
 
+## Put it online (public showcase)
+
+The repo includes a `Dockerfile` and a Render blueprint (`render.yaml`). Hosted copies run
+in **demo mode** (`DEMO_MODE=true`): a "fake data" banner is shown, demo data reloads once per
+day so due dates stay realistic, and uploaded CSV files are not stored.
+
+**Render (free, about 5 minutes):**
+1. Sign in at https://render.com with GitHub and allow access to this repository.
+2. **New > Blueprint**, pick `careguide-portal`, branch with this code, then **Apply**.
+3. Wait for the build (~5 min). Render gives you a URL like `https://careguide-portal-demo.onrender.com`.
+
+On the free plan the service sleeps after ~15 min idle (first visit then takes ~1 minute) and
+data resets on each restart. Any Docker host (Railway, Fly.io, Azure App Service, a VM) also works:
+`docker build -t careguide . && docker run -p 3000:3000 careguide`.
+
+**Never upload the real referral export to a public demo** - it contains PHI and there is no login.
+A real deployment needs authentication, a BAA-covered host and a managed database first.
+
 ## Demo walkthrough (Phase 1 workflow)
 
 Use the **Demo role** switcher at the top right (no real authentication in the MVP).

@@ -35,6 +35,7 @@ export async function seedReferenceData() {
       { key: "businessDayStartHour", value: "9" },
       { key: "businessDayEndHour", value: "18" },
       { key: "defaultSupervisor", value: SUPERVISOR_NAME },
+      { key: "demoSeededAt", value: new Date().toISOString() },
     ],
   });
   for (const r of DEFAULT_RULES) {
@@ -111,3 +112,18 @@ export async function seedDemo(): Promise<string> {
   return msg;
 }
 
+
+let refreshing: Promise<unknown> | null = null;
+
+/**
+ * Public demo mode (DEMO_MODE=true): demo dates are relative to the seed time,
+ * so reload the fake data once per calendar day to keep "today" realistic.
+ */
+export async function refreshDemoIfStale() {
+  if (process.env.DEMO_MODE !== "true") return;
+  const row = await prisma.appSetting.findUnique({ where: { key: "demoSeededAt" } });
+  const seeded = row ? new Date(row.value) : null;
+  if (seeded && startOfDay(seeded).getTime() === startOfDay(new Date()).getTime()) return;
+  refreshing ??= seedDemo().finally(() => (refreshing = null));
+  await refreshing;
+}

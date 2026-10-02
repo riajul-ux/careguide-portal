@@ -1,0 +1,12 @@
+# One-click public demo on Render: Dashboard > New > Blueprint > pick this repo.
+services:
+  - type: web
+    name: careguide-portal-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/sample-csv
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: APP_TIMEZONE
+        value: America/New_York

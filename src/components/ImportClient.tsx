@@ -33,7 +33,7 @@ const FIELD_LABEL: Record<string, string> = {
   firstName: "First Name", lastName: "Last Name", patientName: "Patient Name", referralSource: "Referral Source", homePhone: "Home Phone", phone2: "Phone 2", medicaidNumber: "Medicaid Number",
 };
 
-export function ImportClient() {
+export function ImportClient({ demoMode = false }: { demoMode?: boolean }) {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,6 +79,11 @@ export function ImportClient() {
 
   return (
     <div className="space-y-5">
+      {demoMode && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Public demo: use the fake sample CSV (button above). Do not upload real referral exports here - they contain patient information.
+        </p>
+      )}
       <div
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}

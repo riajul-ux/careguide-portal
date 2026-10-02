@@ -14,7 +14,7 @@ export default async function ImportPage() {
         subtitle="Columns are detected by header name. Cases are matched by Referral ID. The uploaded file is stored as a separate copy and never modified."
         actions={<a className="btn" href="/api/sample-csv">Download fake sample CSV</a>}
       />
-      <ImportClient />
+      <ImportClient demoMode={process.env.DEMO_MODE === "true"} />
       <Card title="Import history">
         {batches.length === 0 ? (
           <p className="text-sm text-slate-500">No imports yet.</p>

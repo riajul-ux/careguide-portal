@@ -122,7 +122,7 @@ export async function runImportText(fileName: string, text: string, user: string
   if (columns.missingRequired.length) {
     throw new Error(`Required column missing: ${columns.missingRequired.join(", ")}. Detected columns: ${parsed.headers.join(", ")}`);
   }
-  const storedPath = opts.storeFile === false ? null : await storeCopy(fileName, text);
+  const storedPath = opts.storeFile === false || process.env.DEMO_MODE === "true" ? null : await storeCopy(fileName, text);
   const rows: NormalizedReferral[] = [];
   const errors: RowError[] = [...parsed.parseErrors];
   parsed.rows.forEach((r, i) => {

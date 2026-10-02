@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { DEMO_USERS } from "@/lib/demoData";
 import { format } from "date-fns";
+import { refreshDemoIfStale } from "@/lib/seedDemo";
 
 export const metadata: Metadata = {
   title: "CareGuide Portal",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await refreshDemoIfStale();
   const user = await getCurrentUser();
   const demoUsers = await prisma.user.findMany({ where: { isDemo: true } });
   const labels = new Map<string, string>(DEMO_USERS.map((u) => [u.name, u.label]));
@@ -36,6 +38,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               <RoleSwitcher current={user.id} currentName={user.name} options={options} />
             </header>
+            {process.env.DEMO_MODE === "true" && (
+              <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-900">
+                <strong>Public demo</strong> - all patients and data are fake and reset daily. Do not upload real patient information (no PHI).
+              </div>
+            )}
             <main className="flex-1 p-6">{children}</main>
           </div>
         </div>
