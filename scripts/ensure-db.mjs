@@ -9,6 +9,7 @@ if (!existsSync(".env")) {
   writeFileSync(".env", 'DATABASE_URL="file:./dev.db"\nAPP_TIMEZONE="America/New_York"\n');
 }
 
+process.env.DATABASE_URL ||= "file:./dev.db";
 run("npx prisma migrate deploy");
 
 const { PrismaClient } = await import("@prisma/client");

@@ -36,7 +36,17 @@ The repo includes a `Dockerfile` and a Render blueprint (`render.yaml`). Hosted 
 in **demo mode** (`DEMO_MODE=true`): a "fake data" banner is shown, demo data reloads once per
 day so due dates stay realistic, and uploaded CSV files are not stored.
 
-**Render (free, about 5 minutes):**
+**GitHub Codespaces (free, no credit card - recommended):**
+1. On GitHub open this repository, switch to the branch with this code, click **Code > Codespaces > Create codespace on ...**.
+2. Wait ~3-5 minutes. The portal installs, builds and starts by itself (port 3000, demo mode).
+3. Open the **PORTS** tab, right-click port 3000 > **Port Visibility > Public**, then copy the
+   forwarded address (`https://<name>-3000.app.github.dev`) and share it.
+
+Free personal accounts include 120 core-hours/month (~60 hours on the default 2-core machine). The codespace
+stops after 30 minutes of inactivity (raise it to 4 hours under GitHub Settings > Codespaces); open it
+again from Code > Codespaces and the same link works once it restarts. Stop it when you are done.
+
+**Render (may ask for a credit card even on the free plan):**
 1. Sign in at https://render.com with GitHub and allow access to this repository.
 2. **New > Blueprint**, pick `careguide-portal`, branch with this code, then **Apply**.
 3. Wait for the build (~5 min). Render gives you a URL like `https://careguide-portal-demo.onrender.com`.

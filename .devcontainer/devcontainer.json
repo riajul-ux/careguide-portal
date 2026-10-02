@@ -1,0 +1,20 @@
+{
+  // GitHub Codespaces: free showcase (public demo mode with fake data).
+  // Code > Codespaces > Create codespace; the portal starts on port 3000 automatically.
+  "name": "CareGuide Portal (demo)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "containerEnv": {
+    "DEMO_MODE": "true",
+    "APP_TIMEZONE": "America/New_York",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "postCreateCommand": "npm install && npm run build",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "CareGuide Portal", "onAutoForward": "openBrowser" }
+  }
+}
